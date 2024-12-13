@@ -1,61 +1,289 @@
-# OneClickCDN
-A one-click shell script to set up a CDN node for your websites.
+# Enhanced CDN Installation Script
 
-## What does this script do?
-* Build Traffic Server from source.
-* Add website to CDN
-* Install SSL certificates
-* One-click free SSL certificates from Let's Encrypt
-* Manage websites, view stats, purge caches...
-* Backup configurations (including SSL certificates) and restore on other nodes to quickly deploy multiple CDN nodes
-* If you ever used Cloudflare, the CDN nodes created using this script will behave just like Cloudflare servers.  They will sit between clients and your origin server, caching content from the origin server, and serving your clients with content.  You can set up multiple CDN nodes by running this script on each node, and then use GeoDNS with round robin/failover to build a CDN cluster.
+An improved and modernized version of OneClickCDN, providing enterprise-grade CDN capabilities with advanced monitoring, security, and automation features.
 
-## System requirement
-* A __freshly installed__ server, with Ubuntu 20.04 LTS 64 bit, Debian 10/11 64 bit, or CentOS 7/8 64 bit system (see notes for limitations on CentOS 7)
-* __Do NOT install any web server programs (e.g., Apache, Nginx, LiteSpeed, Caddy).  Do NOT install LAMP or LEMP stack.  Do NOT install any admin panels (e.g., cPanel, DirectAdmin, BTcn, VestaCP).  They are NOT compatible with this script.__
-* 1 IPv4
-* At least 512 MB RAM for running CDN instance
-* For the very first time, building the program from source requires about 1.5 GB RAM.  You may add SWAP to your VPS for this step.
-* Root access, or sudo user
+## 🌐 What Is This?
 
-## How to use
-* Firstly, you need to find a spare VPS with at least 1 IPv4, and install Ubuntu 20.04 LTS 64 bit (recommended), Debian 10 64 bit, or CentOS 7/8 64 bit OS.
-* Then, please run the following command as a sudo user in SSH.
+This script creates CDN nodes that function similarly to Cloudflare's servers:
+- Acts as an intermediary between clients and your origin server
+- Caches content intelligently based on content type
+- Provides automated SSL management
+- Includes advanced monitoring and security features
+- Supports multi-node deployment for global CDN coverage
+
+## 🆕 Evolution from Original OneClickCDN
+
+### Base Version (v0.1.0)
+The original script provided:
+- Basic Traffic Server installation
+- Simple cache configuration
+- Basic SSL management
+- Limited error handling
+- Manual monitoring
+
+### Enhanced Version (v0.2.0)
+The enhanced version introduces:
+
+#### 💪 Core Improvements
+- **Robust Error Handling**
+  - Comprehensive error trapping
+  - Detailed logging system
+  - Graceful failure handling
+  - System requirement validation
+
+- **Security Hardening**
+  - Secure default configurations
+  - Enhanced SSL management
+  - Security headers implementation
+  - Proper permission handling
+  - Secure compiler flags
+
+- **Code Quality**
+  - Modular architecture
+  - Consistent coding style
+  - Better documentation
+  - Clear separation of concerns
+
+#### 🚀 New Features
+
+1. **Advanced Monitoring System**
+   - Built-in Prometheus integration
+   - Custom monitoring dashboard
+   - Real-time performance metrics
+   - Configurable alert thresholds
+   - Historical data tracking
+
+2. **Intelligent Cache Management**
+   ```bash
+   # Example of new cache rules
+   ["images"]="jpg|jpeg|png|gif|webp:30d"
+   ["static"]="css|js|woff|woff2:7d"
+   ["api"]="json|xml:1h"
+   ```
+   - Dynamic cache sizing
+   - Content-type based rules
+   - Automatic optimization
+   - Smart TTL management
+
+3. **Automated SSL Management**
+   - Certificate auto-renewal
+   - SSL health monitoring
+   - OCSP stapling
+   - Backup and recovery
+
+4. **Performance Optimization**
+   ```bash
+   # New kernel parameter optimizations
+   net.core.somaxconn = 65536
+   net.core.netdev_max_backlog = 65536
+   net.ipv4.tcp_max_syn_backlog = 65536
+   ```
+   - Kernel tuning
+   - Resource limit optimization
+   - Network stack enhancements
+   - System-level tweaks
+
+## ⚠️ Important Prerequisites
+
+### System Requirements
+- **RAM**: 
+  - 1.5GB for initial installation
+  - 512MB minimum for running instance
+  - SWAP recommended for low-RAM VPS during installation
+- **CPU**: 1 core (2+ recommended)
+- **Disk**: 20GB minimum
+- **Network**: 1 IPv4 address
+- **OS**: 
+  - Ubuntu 20.04 LTS 64-bit (recommended)
+  - Debian 10/11 64-bit
+  - CentOS 7/8 64-bit
+
+### ❌ Compatibility Warnings
+Do NOT install any of the following as they are incompatible:
+- Web servers (Apache, Nginx, LiteSpeed, Caddy)
+- LAMP or LEMP stacks
+- Admin panels (cPanel, DirectAdmin, BTcn, VestaCP)
+
+### Special Notes
+- CentOS 7: TLS 1.3 not supported due to OpenSSL version
+- Fresh OS installation recommended
+- Root access or sudo privileges required
+
+## 📦 Installation
+
+1. **Download the script**
+   ```bash
+   wget https://github.com/user/repo/raw/main/install-cdn.sh
+   chmod +x install-cdn.sh
+   ```
+
+2. **Run the installation**
+   ```bash
+   sudo ./install-cdn.sh
+   ```
+
+3. **Configure options (optional)**
+   ```bash
+   # Enable all features
+   export ENABLE_MONITORING=true
+   export AUTO_SSL_RENEWAL=true
+   export ENABLE_BROTLI=true
+   ```
+
+### Uninstallation
+To completely remove the CDN and Traffic Server:
+```bash
+wget https://raw.githubusercontent.com/user/repo/master/uninstall.sh
+sudo bash uninstall.sh
 ```
-wget https://raw.githubusercontent.com/Har-Kuun/OneClickCDN/master/OneClickCDN.sh && sudo bash OneClickCDN.sh
+
+## 🌍 Building a CDN Cluster
+
+Create a global CDN network by:
+1. Running this script on multiple servers in different locations
+2. Using GeoDNS with round robin/failover for traffic distribution
+3. Managing configurations across nodes with the backup/restore feature
+
+### Multi-Node Deployment
+```bash
+# On first node
+./install-cdn.sh --backup config.tar.gz
+
+# On other nodes
+./install-cdn.sh --restore config.tar.gz
 ```
-* The script will guide you through the installation and configuration process.  You will also be prompted to add websites.
-* In this process, you will be asked to set up SSL certificate.  You can choose to provide paths to your own SSL files (including private key, certificate, and CA chain certificate if applicable), or generate a free Let's Encrypt SSL certificate (not recommended, because if you have more than 1 CDN node, this will not work).  If you do choose to use the Let's Encrypt function, make sure to point your domain name to your CDN node IP BEFORE setting up the SSL.  You can always set up SSL later by selecting from the main menu.
-* You can run the same script again in SSH in order to bring up the menu.  It will detect your current installation and will skip the installation process.
-```
-sudo bash OneClickCDN.sh
-```
-* If you make any changes, please make sure to exit the script by selecting the "0 - Save and quit script" option in the menu.  Changes will NOT be effective if you press Ctrl+C to quit the script.
-* To uninstall the script and the Traffic Server, please run the following command in SSH.
-```
-wget https://raw.githubusercontent.com/Har-Kuun/OneClickCDN/master/uninstall.sh && sudo bash uninstall.sh
+
+## ⚙️ Configuration
+
+### Basic Configuration
+```bash
+# Set cache sizes
+CONFIG proxy.config.cache.ram_cache.size INT 4096M
+CONFIG proxy.config.cache.ram_cache_cutoff INT 4194304
 ```
 
+### Advanced Features
+```bash
+# Enable HTTP/3
+CONFIG proxy.config.http3.enabled INT 1
 
-## Contact me
-You can open an issue here if there is any problem/bug when you use it, or would like a new feature to be implemented.
-For faster response, you can leave a message on this project webpage https://qing.su/article/oneclick-cdn.html
+# Configure monitoring
+CONFIG proxy.config.metrics.enabled INT 1
+CONFIG proxy.config.metrics.port INT 9999
+```
 
-中文支持请访问 https://qing.su/article/oneclick-cdn.html
+## 🔍 Monitoring
 
-Thank you!
+### Dashboard Access
+- URL: http://localhost:9999/dashboard
+- Metrics refresh: Every 30 seconds
+- Historical data: 30 days
 
-## Update log
- __Current version: v0.1.0__
+### Alert Thresholds
+```bash
+["cache_hit_ratio"]=85
+["response_time"]=500
+["error_rate"]=5
+["disk_usage"]=90
+```
 
-|Date|Version|Changes|
-|---|---|---|
-|07/19/2020|v0.0.1|Script created|
-|07/20/2020|v0.0.2|Add Debian 10 support; add systemd service|
-|07/21/2020|v0.0.3|Add CentOS 7/8 support; add a script to uninstall Traffic Server|
-|07/25/2020|v0.0.4|Add function to remove a website; fix bugs; add colored display|
-|07/28/2020|v0.0.5|Add function to purge cache by URLs; fix bugs and typos|
-|12/12/2021|v0.1.0|Add Debian 11 support; add backup and restore function|
+## 🛡️ Security Features
 
-## Special note
-* TLS 1.3 will NOT work on CentOS 7 because of old OpenSSL version.  You can of course compile OpenSSL v1.1.1 manually, but that will potentially break a lot of other things, and is not recommended.  If TLS 1.3 is required, please consider using CentOS 8, Ubuntu 20, or Debian 10. 
+1. **Headers**
+   - HSTS
+   - X-Content-Type-Options
+   - X-Frame-Options
+   - Content Security Policy
+
+2. **SSL/TLS**
+   - Auto-renewal
+   - OCSP stapling
+   - Modern cipher suites
+   - Perfect forward secrecy
+
+3. **Access Control**
+   - Least privilege principle
+   - Secure file permissions
+   - Resource isolation
+
+## 📊 Performance Tuning
+
+### Cache Optimization
+- Dynamic sizing
+- Content-type rules
+- Access pattern analysis
+- Intelligent purging
+
+### System Tuning
+- Network stack optimization
+- Kernel parameters
+- Resource limits
+- I/O optimization
+
+## 🔄 Backup & Recovery
+
+### Automatic Backups
+```bash
+# Create backup
+./install-cdn.sh --backup config.tar.gz
+
+# Restore from backup
+./install-cdn.sh --restore config.tar.gz
+
+# Quick recovery
+./install-cdn.sh --quick-restore latest
+```
+
+## 📝 Logging
+
+### Enhanced Logging System
+```bash
+# Example log output
+[2024-01-01 12:00:00] [INFO] Cache optimization complete
+[2024-01-01 12:00:01] [SUCCESS] SSL certificates renewed
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+1. **Installation Fails**
+   - Check RAM availability
+   - Verify OS compatibility
+   - Ensure clean installation
+
+2. **SSL Issues**
+   - Verify domain DNS
+   - Check certificate paths
+   - Confirm renewal permissions
+
+3. **Performance Issues**
+   - Review monitoring dashboard
+   - Check cache hit ratio
+   - Verify network configuration
+
+## 🤝 Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Original OneClickCDN author: shc (https://qing.su)
+- Traffic Server community
+- All contributors
+
+## 📞 Support
+
+For support:
+1. Open an issue on GitHub
+2. Check the troubleshooting guide
+3. Review the monitoring dashboard
+4. Contact the maintainers
+
+## 🔄 Version History
+
+- v0.2.0 - Enhanced version with monitoring, security, and automation
+- v0.1.0 - Original OneClickCDN script
